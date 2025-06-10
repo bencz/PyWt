@@ -51,11 +51,20 @@ class Widget:
         
     def add(self, child: 'Widget') -> 'Widget':
         """Add a child widget to this widget"""
-        if child.parent:
+        # Verificar se child não é None
+        if child is None:
+            raise ValueError("Cannot add None as a child widget")
+            
+        # Remover o widget do pai atual, se existir
+        if hasattr(child, 'parent') and child.parent:
             child.parent.remove(child)
+            
+        # Definir este widget como pai
         child.parent = self
         child.set_property("parent", self.id)  # Store parent ID in properties for client
         self.children.append(child)
+        
+        # Registrar o widget na aplicação, se disponível
         if self.app:
             child._set_application(self.app)
         return child
@@ -78,7 +87,7 @@ class Widget:
         for child in self.children:
             child._set_application(app)
             
-    def set_property(self, name: str, value: Any) -> None:
+    def set_property(self, name: str, value: Any) -> 'Widget':
         """Set a property value and mark it as dirty"""
         self._properties[name] = value
         self._dirty_properties.add(name)
@@ -89,6 +98,7 @@ class Widget:
                 "property": name,
                 "value": value
             })
+        return self
             
     def get_property(self, name: str, default: Any = None) -> Any:
         """Get a property value"""
@@ -124,6 +134,16 @@ class Widget:
         
         if event_type == "click":
             print(f"Processing click event, has on_click: {hasattr(self, 'on_click')}")
+            
+            # Verificar se é um NavLink e processar a navegação
+            if self.__class__.__name__ == "NavLink" and "path" in data:
+                path = data["path"]
+                print(f"Processing navigation to path: {path}")
+                if self.app and hasattr(self.app, "navigator"):
+                    await self.app.navigator.navigate_to(path)
+                    return
+                    
+            # Processar evento de clique normal
             if hasattr(self, "on_click"):
                 print(f"Click event has {len(self.on_click.handlers)} handlers")
                 await self.on_click.emit(event)

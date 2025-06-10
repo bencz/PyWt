@@ -8,21 +8,24 @@ import asyncio
 import sys
 import os
 
-# Add the parent directory to the path so we can import the pywt package
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the parent directory to the path so we can import pywt
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from pywt import Application, WServer
+from pywt.application import Application
+from pywt.server import WServer
+from pywt.navigation import Page
 from pywt.widgets import Label, Button, TextBox, Container
 
 
-class HelloApp(Application):
-    """A simple PyWt application demonstrating bidirectional state synchronization"""
-    def __init__(self):
-        super().__init__()
-        
+class HomePage(Page):
+    """Home page for the Hello World application"""
+    def __init__(self, path="home", title="PyWt - Hello World"):
+        super().__init__(path=path, title=title)
+
+    def __postinit__(self):
         # Create a main container for our UI
         container = Container()
-        self.root.add(container)
+        self.add(container)
         
         # Add a title
         title = Label("PyWt Demo Application")
@@ -65,6 +68,7 @@ class HelloApp(Application):
         self.count = 0
         self._counter_task = asyncio.create_task(self._run_counter())
         
+
     async def on_name_changed(self, event):
         """Handle the name input change event"""
         # This will be called whenever the user types in the text box
@@ -89,7 +93,7 @@ class HelloApp(Application):
         print("Clearing input and greeting")
         self.name_input.set_text("")
         self.greeting.set_text("")
-        self.counter_label.set_text("")
+        self.counter_label.set_text("0")
         self.count = 0
         
     async def _run_counter(self):
@@ -98,6 +102,16 @@ class HelloApp(Application):
             await asyncio.sleep(1)
             self.count += 1
             self.counter_label.set_text(str(self.count))
+
+
+class HelloApp(Application):
+    """Main application class that sets up the navigation"""
+    def __init__(self):
+        super().__init__()
+        # Registrar a página inicial
+        self.navigator.register_page("home", HomePage)
+        # Definir a página inicial como padrão
+        self.navigator.set_default_page("home")
 
 
 if __name__ == "__main__":

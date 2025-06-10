@@ -17,9 +17,10 @@ class Label(Widget):
         text = self.get_property("text", "")
         return f'<div id="{self.id}" class="pywt-label">{text}</div>'
         
-    def set_text(self, text: str) -> None:
+    def set_text(self, text: str) -> 'Label':
         """Set the text of the label"""
         self.set_property("text", text)
+        return self
         
     def text(self) -> str:
         """Get the text of the label"""

@@ -28,6 +28,11 @@ class TextBox(Widget):
         """Get the current value of the textbox"""
         return self.get_property("value", "")
         
+    def set_placeholder(self, placeholder: str) -> 'TextBox':
+        """Set the placeholder text of the textbox"""
+        self.set_property("placeholder", placeholder)
+        return self
+        
     def text(self) -> str:
         """Alias for value() to maintain API compatibility with other widgets"""
         return self.value()

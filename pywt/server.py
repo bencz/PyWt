@@ -4,6 +4,7 @@ Server implementation for PyWt applications
 import asyncio
 import json
 import logging
+import pathlib
 from typing import Type, Dict, Any, Optional, Callable
 from aiohttp import web
 from aiohttp.web import WebSocketResponse
@@ -23,12 +24,17 @@ class WServer:
         self.web_app.add_routes([
             web.get('/', self.handle_index),
             web.get('/ws', self.handle_websocket),
+            web.get('/static/{path:.*}', self.handle_static),
+            web.get('/{path:.*}', self.handle_page),
         ])
         self.clients: Dict[WebSocketResponse, Application] = {}
         
     async def handle_index(self, request: web.Request) -> web.Response:
         """Handle the index page request"""
         app_instance = self.app_class()
+        # Initialize the application
+        if hasattr(app_instance, 'initialize'):
+            await app_instance.initialize()
         html = app_instance.get_html()
         return web.Response(text=html, content_type='text/html')
         
@@ -41,6 +47,9 @@ class WServer:
         print("WebSocket prepared, creating application instance")
         # Create a new application instance for this client
         app_instance = self.app_class()
+        # Initialize the application
+        if hasattr(app_instance, 'initialize'):
+            await app_instance.initialize()
         self.clients[ws] = app_instance
         
         # Register the websocket with the application
@@ -67,6 +76,33 @@ class WServer:
                 del self.clients[ws]
                 
         return ws
+        
+    async def handle_static(self, request: web.Request) -> web.Response:
+        """Handle static file requests"""
+        path = request.match_info['path']
+        app_instance = self.app_class()
+        content, content_type = app_instance.get_static_file_content(path)
+        
+        if content is None:
+            return web.Response(text="File not found", status=404)
+        
+        return web.Response(text=content, content_type=content_type)
+        
+    async def handle_page(self, request: web.Request) -> web.Response:
+        """Handle page requests"""
+        path = request.match_info['path']
+        app_instance = self.app_class()
+        
+        # Initialize the application
+        if hasattr(app_instance, 'initialize'):
+            await app_instance.initialize()
+        
+        # If the path is for a registered page, navigate to it
+        if hasattr(app_instance.navigator, 'pages') and path in app_instance.navigator.pages:
+            await app_instance.navigator.navigate_to(path)
+        
+        html = app_instance.get_html()
+        return web.Response(text=html, content_type='text/html')
         
     async def run(self) -> None:
         """Run the server"""

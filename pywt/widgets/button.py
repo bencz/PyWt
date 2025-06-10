@@ -17,9 +17,10 @@ class Button(Widget):
         text = self.get_property("text", "Button")
         return f'<button id="{self.id}" class="pywt-button">{text}</button>'
         
-    def set_text(self, text: str) -> None:
+    def set_text(self, text: str) -> 'Button':
         """Set the text of the button"""
         self.set_property("text", text)
+        return self
         
     def text(self) -> str:
         """Get the text of the button"""
