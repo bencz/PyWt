@@ -9,6 +9,7 @@ PyWt is a Python implementation inspired by [Wt (Web Toolkit) C++](https://www.w
 - **Async/Await Support**: 100% async/await-based implementation
 - **WebSocket Communication**: Real-time communication between frontend and backend
 - **Automatic State Synchronization**: Keeps frontend and backend state synchronized
+- **Multi-Page Navigation**: Built-in page navigation system
 - **Inspired by Wt C++**: Designed to follow the same paradigms and architecture of the original C++ framework
 
 ## Installation
@@ -17,40 +18,83 @@ PyWt is a Python implementation inspired by [Wt (Web Toolkit) C++](https://www.w
 pip install -r requirements.txt
 ```
 
-## Simple Example
+## Minimal Example
 
 ```python
 import asyncio
-from pywt import Application, WServer
+import sys
+import os
+
+# Add the parent directory to the path to import pywt
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from pywt.application import Application
+from pywt.server import WServer
+from pywt.navigation import Page
 from pywt.widgets import Label, Button, TextBox, Container
 
-class HelloApp(Application):
+
+class HomePage(Page):
+    """Home page of the application"""
+    def __init__(self, path="home", title="PyWt - Home"):
+        super().__init__(path=path, title=title)
+        self.set_property("visible", True)
+        
+        # Create a main container for the UI
+        container = Container()
+        self.add(container)
+        
+        # Add a title
+        title = Label("PyWt Demo")
+        title.set_property("style", "font-size: 24px; font-weight: bold; margin-bottom: 20px;")
+        container.add(title)
+        
+        # Add a text input field
+        self.name_input = TextBox(placeholder="Your name")
+        self.name_input.on_change.connect(self.on_name_changed)
+        container.add(self.name_input)
+        
+        # Add a greeting label
+        self.greeting = Label("")
+        container.add(self.greeting)
+        
+        # Add a button that updates the greeting
+        self.update_button = Button("Say Hello")
+        self.update_button.on_click.connect(self.on_button_clicked)
+        container.add(self.update_button)
+
+    async def on_name_changed(self, event):
+        """Handle the name input change event"""
+        if self.name_input.text():
+            self.greeting.set_text(f"Hello, {self.name_input.text()}!")
+        else:
+            self.greeting.set_text("")
+            
+    async def on_button_clicked(self, event):
+        """Handle the button click event"""
+        name = self.name_input.text()
+        if name:
+            self.greeting.set_text(f"Welcome to PyWt, {name}!")
+        else:
+            self.greeting.set_text("Please enter your name first.")
+
+
+class MinimalApp(Application):
+    """Minimal application with navigation"""
     def __init__(self):
         super().__init__()
-        
-        container = Container()
-        self.root.add(container)
-        
-        self.label = Label("Hello, PyWt!")
-        container.add(self.label)
-        
-        self.textbox = TextBox()
-        self.textbox.on_change.connect(self.on_text_changed)
-        container.add(self.textbox)
-        
-        button = Button("Click me!")
-        button.on_click.connect(self.on_button_clicked)
-        container.add(button)
-        
-    async def on_button_clicked(self, event):
-        self.label.set_text(f"Button clicked! Text is: {self.textbox.text()}")
-        
-    async def on_text_changed(self, event):
-        print(f"Text changed to: {self.textbox.text()}")
+        # Register the home page
+        self.navigator.register_page("home", HomePage)
+        # Set the home page as default
+        self.navigator.set_default_page("home")
+
 
 if __name__ == "__main__":
-    server = WServer(HelloApp, port=8080)
-    asyncio.run(server.run())
+    server = WServer(MinimalApp, port=8080)
+    try:
+        asyncio.run(server.run())
+    except KeyboardInterrupt:
+        print("Server stopped by user")
 ```
 
 ## Architecture
