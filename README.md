@@ -25,7 +25,7 @@ import asyncio
 import sys
 import os
 
-# Add the parent directory to the path to import pywt
+# Add the parent directory to the path to import pywt ( running inside example folder )
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from pywt.application import Application
