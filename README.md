@@ -83,9 +83,7 @@ class MinimalApp(Application):
     """Minimal application with navigation"""
     def __init__(self):
         super().__init__()
-        # Register the home page
         self.navigator.register_page("home", HomePage)
-        # Set the home page as default
         self.navigator.set_default_page("home")
 
 
